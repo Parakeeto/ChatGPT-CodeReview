@@ -42,7 +42,8 @@ export const robot = (app: Probot) => {
   };
 
   app.onAny(async (context) => {
-    app.log.info({ event: context.name, action: context.payload.action });
+    context.log(`An event occurred: ${context.name}`);
+    context.log({ event: context.name, action: context.payload.action });
   });
 
   app.on(
