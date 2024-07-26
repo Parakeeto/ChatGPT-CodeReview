@@ -1,2 +1,2 @@
-import { Probot } from 'probot';
+import { Probot } from "probot";
 export declare const robot: (app: Probot) => void;

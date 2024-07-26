@@ -1,8 +1,8 @@
-import { Context, Probot } from 'probot';
+import { Context, Probot } from "probot";
 
-import { Chat } from './chat.js';
+import { Chat } from "./chat.js";
 
-const OPENAI_API_KEY = 'OPENAI_API_KEY';
+const OPENAI_API_KEY = "OPENAI_API_KEY";
 const MAX_PATCH_COUNT = process.env.MAX_PATCH_LENGTH
   ? +process.env.MAX_PATCH_LENGTH
   : Infinity;
@@ -17,7 +17,7 @@ export const robot = (app: Probot) => {
 
     try {
       const { data } = (await context.octokit.request(
-        'GET /repos/{owner}/{repo}/actions/variables/{name}',
+        "GET /repos/{owner}/{repo}/actions/variables/{name}",
         {
           owner: repo.owner,
           repo: repo.repo,
@@ -41,32 +41,28 @@ export const robot = (app: Probot) => {
     }
   };
 
-  // app.onAny(async (context) => {
-  //   context.log(`An event occurred: ${context.name}`);
-  //   context.log({ event: context.name, action: context.payload.action });
-  // });
+  app.onAny(async (context) => {
+    console.log(`An event occurred: ${context.name}`);
+    console.log({ event: context.name, payload: context.payload });
+  });
 
-  // app.on(
-  //   ['pull_request.opened', 'pull_request.synchronize', 'pull_request.labeled'],
-  app.onAny(
+  app.on(
+    ["pull_request.opened", "pull_request.synchronize", "pull_request.labeled"],
     async (context) => {
       const repo = context.repo();
       const chat = await loadChat(context);
 
       console.log("I swear I am using the latest version of this repo.");
       if (!chat) {
-        console.log('Chat initialized failed');
-        return 'no chat';
+        console.log("Chat initialized failed");
+        return "no chat";
       }
 
       const pull_request = context.payload.pull_request;
 
-      if (
-        pull_request.state === 'closed' ||
-        pull_request.locked
-      ) {
-        console.log('invalid event payload');
-        return 'invalid event payload';
+      if (pull_request.state === "closed" || pull_request.locked) {
+        console.log("invalid event payload");
+        return "invalid event payload";
       }
 
       const target_label = process.env.TARGET_LABEL;
@@ -75,8 +71,8 @@ export const robot = (app: Probot) => {
         (!pull_request.labels?.length ||
           pull_request.labels.every((label) => label.name !== target_label))
       ) {
-        console.log('no target label attached');
-        return 'no target label attached';
+        console.log("no target label attached");
+        return "no target label attached";
       }
 
       const data = await context.octokit.repos.compareCommits({
@@ -88,7 +84,7 @@ export const robot = (app: Probot) => {
 
       let { files: changedFiles, commits } = data.data;
 
-      if (context.payload.action === 'synchronize' && commits.length >= 2) {
+      if (context.payload.action === "synchronize" && commits.length >= 2) {
         const {
           data: { files },
         } = await context.octokit.repos.compareCommits({
@@ -98,9 +94,9 @@ export const robot = (app: Probot) => {
           head: commits[commits.length - 1].sha,
         });
 
-        const ignoreList = (process.env.IGNORE || process.env.ignore || '')
-          .split('\n')
-          .filter((v) => v !== '');
+        const ignoreList = (process.env.IGNORE || process.env.ignore || "")
+          .split("\n")
+          .filter((v) => v !== "");
 
         const filesNames = files?.map((file) => file.filename) || [];
         changedFiles = changedFiles?.filter(
@@ -111,17 +107,17 @@ export const robot = (app: Probot) => {
       }
 
       if (!changedFiles?.length) {
-        console.log('no change found');
-        return 'no change';
+        console.log("no change found");
+        return "no change";
       }
 
-      console.time('gpt cost');
+      console.time("gpt cost");
 
       for (let i = 0; i < changedFiles.length; i++) {
         const file = changedFiles[i];
-        const patch = file.patch || '';
+        const patch = file.patch || "";
 
-        if (file.status !== 'modified' && file.status !== 'added') {
+        if (file.status !== "modified" && file.status !== "added") {
           continue;
         }
 
@@ -142,7 +138,7 @@ export const robot = (app: Probot) => {
               commit_id: commits[commits.length - 1].sha,
               path: file.filename,
               body: res,
-              position: patch.split('\n').length - 1,
+              position: patch.split("\n").length - 1,
             });
           }
         } catch (e) {
@@ -150,13 +146,13 @@ export const robot = (app: Probot) => {
         }
       }
 
-      console.timeEnd('gpt cost');
+      console.timeEnd("gpt cost");
       console.info(
-        'successfully reviewed',
+        "successfully reviewed",
         context.payload.pull_request.html_url
       );
 
-      return 'success';
+      return "success";
     }
   );
 };
