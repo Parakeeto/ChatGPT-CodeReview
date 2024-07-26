@@ -53,6 +53,7 @@ export const robot = (app: Probot) => {
       const repo = context.repo();
       const chat = await loadChat(context);
 
+      console.log("I swear I am using the latest version of this repo.");
       if (!chat) {
         console.log('Chat initialized failed');
         return 'no chat';
