@@ -41,13 +41,14 @@ export const robot = (app: Probot) => {
     }
   };
 
-  app.onAny(async (context) => {
-    context.log(`An event occurred: ${context.name}`);
-    context.log({ event: context.name, action: context.payload.action });
-  });
+  // app.onAny(async (context) => {
+  //   context.log(`An event occurred: ${context.name}`);
+  //   context.log({ event: context.name, action: context.payload.action });
+  // });
 
-  app.on(
-    ['pull_request.opened', 'pull_request.synchronize', 'pull_request.labeled'],
+  // app.on(
+  //   ['pull_request.opened', 'pull_request.synchronize', 'pull_request.labeled'],
+  app.onAny(
     async (context) => {
       const repo = context.repo();
       const chat = await loadChat(context);
